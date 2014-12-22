@@ -4,6 +4,10 @@
 declare -a NAMES
 declare -A INSTALL
 
+green='\e[1m\e[32m'
+red='\e[1m\e[31m'
+reset='\e[0m'
+
 getVersion() {
         apt-cache show $1 | grep Version | head -n1 | cut -d " " -f2
 }
@@ -43,17 +47,18 @@ markauto() {
                 local package=(${INSTALL["$name"]})
                 local version=${package[0]}
 
-                echo "- $name?"
                 if [[ -z ${installed["$name"]} ]]; then
                         # Second parameter = manual version
                         # Third paramter = url for manual install
-                        echo "	Not installed -> installing"
+
+                        echo -e "${red}- $name? Not installed -> installing${reset}"
                         if [[ $version ]]; then
                                 installLocal $name "${package[*]}"
                         else
                                 sudo apt-get --no-install-recommends install $name
                         fi
                 else
+                    echo -e "${green}- $name?${reset}"
                         if [[ $version ]]; then
                                 # Check version if package is already installed and version is defined (="local package")
                                 local current_version=$(getVersion $name)
