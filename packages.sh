@@ -19,7 +19,8 @@ installLocal() {
         local url=${package[1]}
 
         if [[ $url ]]; then
-                curl -o /tmp/$name.deb "$url" && sudo dpkg -i /tmp/$name.deb && rm /tmp/$name.deb
+                curl -Lo /tmp/$name.deb "$url" && sudo dpkg -i /tmp/$name.deb && rm /tmp/$name.deb
+                sudo apt-get install -f
         elif [[ $version ]]; then
                 echo "	No URL given for local package Install manually plz?"
         fi
