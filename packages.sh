@@ -56,7 +56,7 @@ markauto() {
                         if [[ $version ]]; then
                                 installLocal $name "${package[*]}"
                         else
-                                sudo apt-get --no-install-recommends install $name
+                                sudo apt-get -y --no-install-recommends install $name
                         fi
                 else
                     echo -e "${green}- $name?${reset}"
