@@ -18,7 +18,10 @@ installLocal() {
         local version=${package[0]}
         local url=${package[1]}
 
-        if [[ $url ]]; then
+        if [[ -f $url ]]; then
+                sudo dpkg -i $url
+                sudo apt-get install -f
+        elif [[ $url ]]; then
                 curl -Lo /tmp/$name.deb "$url" && sudo dpkg -i /tmp/$name.deb && rm /tmp/$name.deb
                 sudo apt-get install -f
         elif [[ $version ]]; then
