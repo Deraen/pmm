@@ -80,12 +80,16 @@ markauto() {
                 fi
         done
 
+        markauto=""
         for x in ${!manual[@]}; do
                 if [[ -z ${INSTALL["$x"]} ]]; then
                         echo "$x is marked manual but is not needed -> mark auto"
-                        sudo apt-mark auto $x > /dev/null
+                        markauto="$markauto $x"
                 fi
         done
+        if [[ ! -z $markauto ]]; then
+                sudo apt-mark auto $markauto > /dev/null
+        fi
 }
 
 autoremove() {
