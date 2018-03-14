@@ -20,10 +20,10 @@ installLocal() {
 
         if [[ -f $url ]]; then
                 sudo dpkg -i $url
-                sudo apt-get install -f
+                sudo apt install -f
         elif [[ $url ]]; then
                 curl -Lo /tmp/$name.deb "$url" && sudo dpkg -i /tmp/$name.deb && rm /tmp/$name.deb
-                sudo apt-get install -f
+                sudo apt install -f
         elif [[ $version ]]; then
                 echo "	No URL given for local package Install manually plz?"
         fi
@@ -59,7 +59,7 @@ markauto() {
                         if [[ $version ]]; then
                                 installLocal $name "${package[*]}"
                         else
-                                sudo apt-get -y --no-install-recommends install $name
+                                sudo apt -y --no-install-recommends install $name
                         fi
                 else
                     echo -e "${green}- $name?${reset}"
@@ -93,5 +93,5 @@ markauto() {
 }
 
 autoremove() {
-        sudo apt-get autoremove
+        sudo apt autoremove
 }
