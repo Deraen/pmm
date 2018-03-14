@@ -4,7 +4,6 @@
 # NOTE: Doesn't support deb-src
 
 declare -A SOURCE_FILES
-OPS=0
 SOURCESDIR="/etc/apt/sources.list.d"
 
 confirm() {
@@ -31,40 +30,89 @@ saveRepo() {
         if changed $filename "$content"; then
                 echo "$(basename $filename) changed or added"
                 echo -e $content | sudo tee $filename > /dev/null
-                OPS=$((OPS + 1))
+        fi
+}
+
+repo() {
+        local NAME=$1
+        local REPO=$2
+        shift
+        shift
+
+        saveRepo $NAME.list "$REPO"
+
+        local KEYRING="$NAME"
+        local KEYID
+        local KEY_URL
+
+        while [[ $# -gt 0 ]]; do
+                key=$1
+                case $key in
+                        --keyid)
+                                KEYID="$2"
+                                shift
+                                shift
+                                ;;
+                        --keyring)
+                                KEYRING="$2"
+                                shift
+                                shift
+                                ;;
+                        --key-url)
+                                KEY_URL="$2"
+                                shift
+                                shift
+                                ;;
+                        *)
+                                echo "Unknown option: $key"
+                                shift
+                                ;;
+                esac
+        done
+
+        local file="/etc/apt/trusted.gpg.d/$KEYRING.gpg"
+        if [[ ! -f "$file" ]]; then
+                if [[ ! -z $KEYID ]]; then
+                        sudo gpg \
+                                --no-default-keyring \
+                                --keyring "$file" \
+                                --keyserver hkp://keyserver.ubuntu.com:80 \
+                                --recv-keys "$KEYID"
+                elif [[ ! -z $KEY_URL ]]; then
+                        curl -sSL "$KEY_URL" | sudo gpg \
+                                --no-default-keyring \
+                                --keyring "$file" \
+                                --import
+                fi
+
+                if [[ ! -z $KEYID ]] || [[ ! -z $KEY_URL ]]; then
+                        chmod og+r "$file"
+                fi
         fi
 }
 
 ppa() {
         # node.js -> node_js
-        local ppaname=${2//\./_}
-
-        saveRepo $1-$ppaname-$3.list "deb http://ppa.launchpad.net/$1/$2/ubuntu $3 main"
+        local NAME="$1-${2//\./_}-$3"
+        local REPO="deb http://ppa.launchpad.net/$1/$2/ubuntu $3 main"
+        shift
+        shift
+        shift
+        repo "$NAME" "$REPO" $@
 }
 
-repo() {
-        saveRepo $1.list "$2"
-}
-
-clearRepos() {
-        local extras=""
+updateRepos() {
         for file in $SOURCESDIR/*.list; do
                 if [[ -z ${SOURCE_FILES["$file"]} ]]; then
-                        echo "Found extra repo? $(basename $file)"
-                        extras="$extras $file"
+                        if confirm "Found extra repository file $(basename $file), remove?"; then
+                                rm $file
+                        fi
                 fi
         done
 
-        if [[ $extras ]] && confirm "Remove extras"; then
-                sudo rm $extras
-                OPS=$((OPS + 1))
-        fi
+        # TODO: Clean /etc/apt/trusted.gpg.d/
 
-        if [[ $OPS -gt 0 ]] && confirm "PPAs/repos changed, run getkeys?"; then
-                sudo launchpad-getkeys
-
-                if confirm "Did keys change, run update?"; then
-                        sudo apt-get update
-                fi
+        if confirm "Run update?"; then
+                sudo apt update
         fi
 }
