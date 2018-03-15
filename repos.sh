@@ -7,9 +7,26 @@ declare -A SOURCE_FILES
 SOURCESDIR="/etc/apt/sources.list.d"
 
 confirm() {
-        read -r -p "$1 [Y/n] " yes
-        yes=${yes,,} # tolower
-        [[ $yes =~ ^(yes|y| ) ]]
+    local OPTIND
+    local prompt="[Y/n]"
+    local default="y"
+    while getopts ":i" opt; do
+        case $opt in
+            i)
+                default="n"
+                prompt="[y/N]"
+                ;;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    read -r -p "$1 $prompt " ans
+    ans=${ans,,} # tolower
+    if [[ ! $ans ]]; then
+        ans=$default
+    fi
+    [[ $ans =~ ^(yes|y) ]]
 }
 
 changed() {
@@ -112,7 +129,7 @@ updateRepos() {
 
         # TODO: Clean /etc/apt/trusted.gpg.d/
 
-        if confirm "Run update?"; then
+        if confirm -i "Run update?"; then
                 sudo apt update
         fi
 }
