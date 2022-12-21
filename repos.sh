@@ -98,17 +98,23 @@ repo() {
                 # If file doesn't exist or keyring doesn't contain the key
                 if [[ ! -f "$file" ]] || ! gpg --no-default-keyring --keyring "$file" --list-key "$KEYID" &> /dev/null; then
                         echo "Get key $KEYID"
-                        sudo apt-key \
-                                --keyring "$file" \
-                                adv \
+                        gpg \
+                                --no-default-keyring \
+                                --keyring "/tmp/$KEYID.gpg" \
                                 --keyserver hkp://keyserver.ubuntu.com:80 \
                                 --recv-keys "$KEYID"
+                        gpg \
+                                --no-default-keyring \
+                                --keyring "/tmp/$KEYID.gpg" \
+                                -o "$file" \
+                                --export "$KEYID"
+                        rm -f "tmp/$KEYID.gpg"
                 fi
         elif [[ ! -z $KEY_URL ]]; then
                 # If file doesn't exist or keyring doesn't contain any keys
                 if [[ ! -f "$file" ]] || [[ $(gpg --no-default-keyring --keyring "$file" --list-keys | wc -l) == "0" ]]; then
                         echo "Download $KEY_URL"
-                        curl -sSL "$KEY_URL" | sudo apt-key --keyring "$file" add -
+                        curl -sSL "$KEY_URL" | sudo gpg --dearmor -o "$file"
                 fi
         fi
 }
